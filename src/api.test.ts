@@ -90,6 +90,8 @@ describe("startApi", () => {
     expect(store.channelHistory).toHaveBeenCalledWith("c1", 100);
     await fetch(`${base}/channels/c1/messages`);
     expect(store.channelHistory).toHaveBeenCalledWith("c1", 30);
+    await fetch(`${base}/channels/c1/messages?limit=-1`);
+    expect(store.channelHistory).toHaveBeenCalledWith("c1", 1);
   });
 
   test("unmatched routes return 404", async () => {

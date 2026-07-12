@@ -30,9 +30,9 @@ This package ships TypeScript source (no build). Run your app under `tsx`
 ## Discord bot setup (once per app)
 
 1. Create an application + bot at https://discord.com/developers/applications
-2. Enable **Message Content** and **Server Members** intents.
-3. Invite it to your guild with permissions: Manage Webhooks, Manage
-   Channels, Send Messages, Read Message History.
+2. Enable the **Message Content** intent.
+3. Invite it to your guild with permissions: View Channel, Send Messages,
+   Manage Webhooks.
 4. Put the bot token, guild id and channel ids in your app's `.env` —
    updiscord itself never reads env; you pass values in.
 

@@ -55,7 +55,7 @@ export function startApi(opts: ApiOptions): http.Server {
       const channelMatch = url.pathname.match(/^\/channels\/([^/]+)\/messages$/);
       if (channelMatch && req.method === "GET") {
         const limitParam = Number(url.searchParams.get("limit") ?? 30);
-        const limit = Math.min(Number.isFinite(limitParam) ? limitParam : 30, 100);
+        const limit = Math.max(1, Math.min(Number.isFinite(limitParam) ? limitParam : 30, 100));
         const messages = await store.channelHistory(channelMatch[1], limit);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ messages }));
