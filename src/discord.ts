@@ -15,6 +15,8 @@ export function createClient(): Client {
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildPresences,
+      GatewayIntentBits.GuildMembers,
     ],
   });
 }

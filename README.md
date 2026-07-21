@@ -20,8 +20,8 @@ up-ecosystem app already does.
 ## Discord bot setup (once per app)
 
 1. Create an application + bot at https://discord.com/developers/applications
-2. Enable the **Message Content** intent.
-3. Invite it with: View Channel, Send Messages, Manage Webhooks.
+2. Enable the **Presence**, **Server Members**, and **Message Content** intents (Bot tab, "Privileged Gateway Intents").
+3. Invite it with: View Channels, Send Messages, Read Message History, Manage Channels, Manage Roles, Manage Webhooks.
 4. Pass the bot token, guild id, and channel ids from your app's own `.env`.
 
 ## Usage
