@@ -4,12 +4,25 @@
  * onboarding + backlog replay on agent ready.
  */
 
+import { exec } from "node:child_process";
 import { Events } from "discord.js";
 import { startApi } from "./api";
 import { DebounceBuffer, type BufferedMessage } from "./debounce";
 import { createClient, isEcho, sendAsAgent } from "./discord";
 import { SqliteHubStore } from "./store/sqlite";
 import type { AgentRecord, Hub, HubConfig, HubStore } from "./types";
+
+export function runOnReadyHook(hook: string | undefined): void {
+  if (!hook) return;
+  exec(hook, (err, stdout, stderr) => {
+    if (err) {
+      console.error(`[updiscord] onReadyHook failed: ${err.message}`);
+      return;
+    }
+    if (stdout.trim()) console.log(`[updiscord] onReadyHook stdout: ${stdout.trim()}`);
+    if (stderr.trim()) console.error(`[updiscord] onReadyHook stderr: ${stderr.trim()}`);
+  });
+}
 
 const DEFAULT_HTTP_PORT = 4400;
 const DEFAULT_ADAPTER_BASE_PORT = 4500;
@@ -107,6 +120,7 @@ export async function startHub(config: HubConfig): Promise<Hub> {
     );
   }
   const onboarding = new Map(config.agents.map((a) => [a.name, a.onboardingMessage]));
+  const onReadyHooks = new Map(config.agents.map((a) => [a.name, a.onReadyHook]));
 
   const client = createClient();
 
@@ -155,6 +169,7 @@ export async function startHub(config: HubConfig): Promise<Hub> {
       const backlog = await undeliveredBacklog(store, agent);
       const message = onboarding.get(agent.name) ?? defaultOnboarding(agent);
       await deliverSystemMessage(agent, message + backlog);
+      runOnReadyHook(onReadyHooks.get(agent.name));
     },
   });
 

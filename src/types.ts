@@ -77,6 +77,8 @@ export interface AgentConfig {
   channelId: string;
   /** Sent to the agent (via its adapter) when it signals ready. Backlog is appended. */
   onboardingMessage?: string;
+  /** Shell command exec'd (fire-and-forget) once, right after onboarding delivery. */
+  onReadyHook?: string;
 }
 
 export interface HubConfig {
