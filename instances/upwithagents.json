@@ -1,0 +1,28 @@
+{
+  "id": "upwithagents",
+  "discordTokenEnv": "UPWITHAGENTS_DISCORD_TOKEN",
+  "hubPort": 4400,
+  "adapterBasePort": 4500,
+  "personas": [
+    {
+      "name": "Advisor",
+      "kind": "advisor",
+      "channelId": "1525597656032739492",
+      "cwd": "/Users/laci/workspace/upwithagents/walletup",
+      "adapterCommand": {
+        "command": "npx",
+        "args": [
+          "tsx",
+          "/Users/laci/workspace/upwithagents/walletup/packages/adapter/src/index.ts"
+        ]
+      },
+      "adapterEnv": {
+        "DATABASE_URL": "file:/Users/laci/workspace/upwithagents/walletup/packages/db/prisma/walletup.db"
+      },
+      "claudeAgent": "walletup-advisor",
+      "model": "claude-sonnet-5",
+      "onReadyHook": "cd /Users/laci/workspace/upwithagents/walletup && pnpm --filter @walletup/hub run scheduler"
+    }
+  ],
+  "guildId": "1525597653818281984"
+}
