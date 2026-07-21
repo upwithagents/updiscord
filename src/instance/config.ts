@@ -34,7 +34,13 @@ export function parseInstanceConfig(raw: unknown): InstanceConfig {
   return config;
 }
 
-const PORT_BLOCK = 100;
+/**
+ * Each instance reserves a PORT_BLOCK-wide range: its own hubPort, then
+ * ADAPTER_OFFSET ports later, a block of adapter ports (one per persona).
+ * PORT_BLOCK must exceed ADAPTER_OFFSET so an instance's adapter ports
+ * never reach the next instance's hubPort.
+ */
+const PORT_BLOCK = 200;
 const BASE_HUB_PORT = 4400;
 const ADAPTER_OFFSET = 100;
 

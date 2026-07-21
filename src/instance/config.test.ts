@@ -40,7 +40,16 @@ describe("allocatePorts", () => {
 
   test("picks the next free block after the highest existing hubPort", () => {
     const existing = [parseInstanceConfig(validRaw)];
-    expect(allocatePorts(existing)).toEqual({ hubPort: 4500, adapterBasePort: 4600 });
+    expect(allocatePorts(existing)).toEqual({ hubPort: 4600, adapterBasePort: 4700 });
+  });
+
+  test("an instance's adapter port range never reaches the next instance's hubPort", () => {
+    // Regression: PORT_BLOCK must stay wider than ADAPTER_OFFSET, or a
+    // second instance's hubPort collides with the first instance's
+    // adapterBasePort (observed live: both landed on 4500).
+    const first = allocatePorts([]);
+    const second = allocatePorts([{ ...validRaw, ...first }]);
+    expect(second.hubPort).toBeGreaterThan(first.adapterBasePort);
   });
 });
 
@@ -55,6 +64,6 @@ describe("buildSkeletonConfig", () => {
   test("allocates the next port block when other instances already exist", () => {
     const existing = [parseInstanceConfig(validRaw)];
     const cfg = buildSkeletonConfig("upwithagents", existing);
-    expect(cfg.hubPort).toBe(4500);
+    expect(cfg.hubPort).toBe(4600);
   });
 });
