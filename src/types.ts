@@ -81,6 +81,19 @@ export interface AgentConfig {
   onReadyHook?: string;
 }
 
+/** A request from an existing persona to register and launch a new one. */
+export interface SpawnPersonaInput {
+  name: string;
+  kind: string;
+  channelId: string;
+  cwd: string;
+  adapterCommand: { command: string; args: string[] };
+  adapterEnv?: Record<string, string>;
+  claudeAgent?: string;
+  model?: string;
+  onboardingMessage?: string;
+}
+
 export interface HubConfig {
   token: string;
   guildId: string;
@@ -95,6 +108,13 @@ export interface HubConfig {
   storePath?: string;
   /** Webhook name prefix, default "updiscord" (webhooks named `<prefix>-<agent>`). */
   webhookPrefix?: string;
+  /**
+   * Called after a persona is registered via the spawn_persona tool, before
+   * the HTTP response goes out. The host (bin/hub-runner.ts) uses this to
+   * persist the new persona into instances/<id>.json and launch its tmux
+   * session — startHub itself never touches the filesystem or tmux.
+   */
+  onPersonaSpawned?: (agent: AgentRecord, input: SpawnPersonaInput) => Promise<void>;
 }
 
 export interface Hub {

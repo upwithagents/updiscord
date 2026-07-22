@@ -29,6 +29,13 @@ export async function getTextChannel(client: Client, channelId: string): Promise
   return channel;
 }
 
+/** Create a new text channel in the instance's guild. Requires the bot to have Manage Channels. */
+export async function createGuildChannel(client: Client, guildId: string, name: string): Promise<string> {
+  const guild = await client.guilds.fetch(guildId);
+  const channel = await guild.channels.create({ name, type: ChannelType.GuildText });
+  return channel.id;
+}
+
 /** Ensure the agent has a webhook persona in the given channel; persist it. */
 export async function ensureWebhook(
   client: Client,

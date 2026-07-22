@@ -8,9 +8,9 @@ import { exec } from "node:child_process";
 import { Events } from "discord.js";
 import { startApi } from "./api";
 import { DebounceBuffer, type BufferedMessage } from "./debounce";
-import { createClient, isEcho, sendAsAgent } from "./discord";
+import { createClient, createGuildChannel, isEcho, sendAsAgent } from "./discord";
 import { SqliteHubStore } from "./store/sqlite";
-import type { AgentRecord, Hub, HubConfig, HubStore } from "./types";
+import type { AgentRecord, Hub, HubConfig, HubStore, SpawnPersonaInput } from "./types";
 
 export function runOnReadyHook(hook: string | undefined): void {
   if (!hook) return;
@@ -123,8 +123,24 @@ export async function startHub(config: HubConfig): Promise<Hub> {
   }
   const onboarding = new Map(config.agents.map((a) => [a.name, a.onboardingMessage]));
   const onReadyHooks = new Map(config.agents.map((a) => [a.name, a.onReadyHook]));
+  let nextAdapterPort = basePort + config.agents.length;
 
   const client = createClient();
+
+  async function spawnPersona(input: SpawnPersonaInput): Promise<{ agentId: string }> {
+    if (await store.getAgentByName(input.name)) {
+      throw new Error(`updiscord: agent ${input.name} already exists`);
+    }
+    const agent = await store.ensureAgent({
+      name: input.name,
+      kind: input.kind,
+      channelId: input.channelId,
+      adapterPort: nextAdapterPort++,
+    });
+    onboarding.set(input.name, input.onboardingMessage);
+    await config.onPersonaSpawned?.(agent, input);
+    return { agentId: agent.id };
+  }
 
   const buffer = new DebounceBuffer(async (channelId, messages) => {
     for (const agent of await store.listAgents()) {
@@ -167,6 +183,8 @@ export async function startHub(config: HubConfig): Promise<Hub> {
     store,
     send: (agent, channelId, content) =>
       sendAsAgent(client, store, webhookPrefix, agent, channelId, content),
+    createChannel: (name) => createGuildChannel(client, config.guildId, name),
+    spawnPersona,
     onReady: async (agent) => {
       const backlog = await undeliveredBacklog(store, agent);
       const message = onboarding.get(agent.name) ?? defaultOnboarding(agent);

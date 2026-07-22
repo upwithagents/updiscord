@@ -2,8 +2,8 @@
  * updiscord/adapter — MCP server bridging one Claude Code agent and the hub.
  *
  * Talks MCP JSON-RPC to Claude over stdio and HTTP to the hub. Built-in
- * tools: reply, read_channel. Host-specific tools (proposals, memory, ...)
- * are injected via AdapterOptions.extraTools.
+ * tools: reply, read_channel, create_channel, spawn_persona. Host-specific
+ * tools (proposals, memory, ...) are injected via AdapterOptions.extraTools.
  *
  * Stdout is reserved for MCP. ALL logging goes to stderr.
  */
@@ -93,6 +93,72 @@ export async function runAdapter(opts: AdapterOptions = {}): Promise<void> {
       }
       const body = (await res.json()) as { messages: MessageRecord[] };
       return text(formatHistory(body.messages));
+    },
+  );
+
+  server.tool(
+    "create_channel",
+    "Create a new Discord text channel in this instance's server. Returns its channel_id.",
+    {
+      name: z.string().describe("Channel name (Discord lowercases/hyphenates it)"),
+    },
+    async ({ name }) => {
+      const res = await fetch(`${HUB_URL}/mgmt/create-channel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        console.error(`[adapter] create_channel failed: ${res.status} ${t}`);
+        return text(`Error: ${t}`);
+      }
+      const body = (await res.json()) as { channel_id: string };
+      return text(`Created #${name} (channel_id ${body.channel_id}).`);
+    },
+  );
+
+  server.tool(
+    "spawn_persona",
+    "Register and launch a new persistent persona (its own Claude Code session) in this " +
+      "instance, listening in the given channel. Use after create_channel if the persona needs " +
+      "a fresh channel of its own.",
+    {
+      name: z.string().describe("Unique persona name, e.g. Sandra"),
+      kind: z.string().describe("Short role label, e.g. financial-advisor"),
+      channel_id: z.string().describe("Discord channel_id the persona will listen/reply in"),
+      cwd: z.string().describe("Working directory for the persona's Claude Code session"),
+      adapter_command: z.string().describe("Command to launch its MCP adapter, e.g. npx"),
+      adapter_args: z.array(z.string()).describe("Args for adapter_command"),
+      claude_agent: z
+        .string()
+        .optional()
+        .describe("Name of a .claude/agents/<name>.md persona definition in cwd"),
+      model: z.string().optional(),
+      onboarding_message: z.string().optional().describe("Greeting sent once the persona is ready"),
+    },
+    async (args) => {
+      const res = await fetch(`${HUB_URL}/mgmt/spawn-persona`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: args.name,
+          kind: args.kind,
+          channelId: args.channel_id,
+          cwd: args.cwd,
+          adapterCommand: { command: args.adapter_command, args: args.adapter_args },
+          claudeAgent: args.claude_agent,
+          model: args.model,
+          onboardingMessage: args.onboarding_message,
+        }),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        console.error(`[adapter] spawn_persona failed: ${res.status} ${t}`);
+        return text(`Error: ${t}`);
+      }
+      const body = (await res.json()) as { agentId: string };
+      return text(`Spawned ${args.name} (agent_id ${body.agentId}). It should come online shortly.`);
     },
   );
 

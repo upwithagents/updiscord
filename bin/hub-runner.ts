@@ -7,7 +7,7 @@
  */
 
 import { config as loadEnv } from "dotenv";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { startHub } from "../src/hub";
 import {
   instanceConfigPath,
@@ -15,7 +15,7 @@ import {
   instanceEnvPath,
   instanceMcpConfigDir,
 } from "../src/instance/paths";
-import { parseInstanceConfig } from "../src/instance/config";
+import { parseInstanceConfig, type PersonaConfig } from "../src/instance/config";
 import { spawnAgent } from "../src/spawn";
 
 function requireArg(name: string): string {
@@ -42,7 +42,10 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const hub = await startHub({
+  const hubUrl = `http://127.0.0.1:${config.hubPort}`;
+  let hub: Awaited<ReturnType<typeof startHub>>;
+
+  hub = await startHub({
     token,
     guildId: config.guildId,
     agents: config.personas.map((p) => ({
@@ -55,9 +58,38 @@ async function main(): Promise<void> {
     httpPort: config.hubPort,
     adapterBasePort: config.adapterBasePort,
     storePath: instanceDbPath(instanceId),
+    onPersonaSpawned: async (agent, input) => {
+      // Persist so the new persona survives a hub restart, and launch its
+      // Claude CLI session immediately so it's usable right away.
+      const persona: PersonaConfig = {
+        name: input.name,
+        kind: input.kind,
+        channelId: input.channelId,
+        cwd: input.cwd,
+        adapterCommand: input.adapterCommand,
+        adapterEnv: input.adapterEnv,
+        claudeAgent: input.claudeAgent,
+        model: input.model,
+        onboardingMessage: input.onboardingMessage,
+      };
+      config.personas.push(persona);
+      writeFileSync(instanceConfigPath(instanceId), JSON.stringify(config, null, 2));
+
+      await spawnAgent({
+        agent,
+        store: hub.store,
+        hubUrl,
+        cwd: input.cwd,
+        adapterCommand: input.adapterCommand,
+        adapterEnv: input.adapterEnv,
+        claudeAgent: input.claudeAgent,
+        model: input.model,
+        mcpConfigDir: instanceMcpConfigDir(instanceId),
+        sessionPrefix: instanceId,
+      });
+    },
   });
 
-  const hubUrl = `http://127.0.0.1:${config.hubPort}`;
   for (const persona of config.personas) {
     const agent = hub.agents.find((a) => a.name === persona.name);
     if (!agent) throw new Error(`updiscord: agent ${persona.name} missing after startHub`);
