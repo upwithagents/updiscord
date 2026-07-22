@@ -5,23 +5,19 @@
   "adapterBasePort": 4500,
   "personas": [
     {
-      "name": "Advisor",
-      "kind": "advisor",
-      "channelId": "1525597656032739492",
-      "cwd": "/Users/laci/workspace/upwithagents/walletup",
+      "name": "DistrictEngineeringManager",
+      "kind": "engineering-manager",
+      "channelId": "1529281397183742034",
+      "cwd": "/Users/laci/workspace/upwithagents",
       "adapterCommand": {
         "command": "npx",
         "args": [
           "tsx",
-          "/Users/laci/workspace/upwithagents/walletup/packages/adapter/src/index.ts"
+          "/Users/laci/workspace/upwithagents/updiscord/bin/generic-adapter.ts"
         ]
       },
-      "adapterEnv": {
-        "DATABASE_URL": "file:/Users/laci/workspace/upwithagents/walletup/packages/db/prisma/walletup.db"
-      },
-      "claudeAgent": "walletup-advisor",
-      "model": "claude-sonnet-5",
-      "onReadyHook": "cd /Users/laci/workspace/upwithagents/walletup && pnpm --filter @walletup/hub run scheduler"
+      "claudeAgent": "district-engineering-manager",
+      "model": "claude-sonnet-5"
     }
   ],
   "guildId": "1525597653818281984"
