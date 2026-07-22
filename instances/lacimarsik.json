@@ -6,8 +6,8 @@
   "adapterBasePort": 4700,
   "personas": [
     {
-      "name": "WalletUpAdvisor",
-      "kind": "advisor",
+      "name": "Jake",
+      "kind": "concierge",
       "channelId": "1529115382630191198",
       "cwd": "/Users/laci/workspace/upwithagents/walletup",
       "adapterCommand": {
@@ -20,7 +20,7 @@
       "adapterEnv": {
         "DATABASE_URL": "file:/Users/laci/workspace/upwithagents/walletup/packages/db/prisma/walletup.db"
       },
-      "claudeAgent": "walletup-advisor",
+      "claudeAgent": "jake",
       "model": "claude-sonnet-5"
     }
   ]

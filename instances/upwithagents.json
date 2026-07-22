@@ -5,7 +5,7 @@
   "adapterBasePort": 4500,
   "personas": [
     {
-      "name": "DistrictEngineeringManager",
+      "name": "Ron",
       "kind": "engineering-manager",
       "channelId": "1529281397183742034",
       "cwd": "/Users/laci/workspace/upwithagents",
