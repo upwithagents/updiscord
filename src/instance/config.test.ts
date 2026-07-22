@@ -51,6 +51,14 @@ describe("allocatePorts", () => {
     const second = allocatePorts([{ ...validRaw, ...first }]);
     expect(second.hubPort).toBeGreaterThan(first.adapterBasePort);
   });
+
+  test("refuses to allocate a range that would reach the reserved 5000/6000 factories", () => {
+    // Other up-ecosystem workspaces run their own Discord factories on
+    // ports 5000 and 6000 — this allocator must never hand out a range
+    // that reaches them.
+    const nearLimit = { ...validRaw, hubPort: 4800, adapterBasePort: 4900 };
+    expect(() => allocatePorts([parseInstanceConfig(nearLimit)])).toThrow(/reserved ports/);
+  });
 });
 
 describe("buildSkeletonConfig", () => {

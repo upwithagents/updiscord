@@ -39,15 +39,29 @@ export function parseInstanceConfig(raw: unknown): InstanceConfig {
  * ADAPTER_OFFSET ports later, a block of adapter ports (one per persona).
  * PORT_BLOCK must exceed ADAPTER_OFFSET so an instance's adapter ports
  * never reach the next instance's hubPort.
+ *
+ * MAX_SAFE_HUB_PORT keeps this factory's whole range under 5000: other
+ * up-ecosystem workspaces run their own Discord factories (via overmind/
+ * disco-factory) on 5000 and 6000, and this allocator must never drift
+ * into those.
  */
 const PORT_BLOCK = 200;
 const BASE_HUB_PORT = 4400;
 const ADAPTER_OFFSET = 100;
+const MAX_SAFE_HUB_PORT = 4999;
 
 export function allocatePorts(existing: InstanceConfig[]): { hubPort: number; adapterBasePort: number } {
   const maxHubPort = existing.reduce((max, cfg) => Math.max(max, cfg.hubPort), BASE_HUB_PORT - PORT_BLOCK);
   const hubPort = maxHubPort + PORT_BLOCK;
-  return { hubPort, adapterBasePort: hubPort + ADAPTER_OFFSET };
+  const adapterBasePort = hubPort + ADAPTER_OFFSET;
+  if (hubPort > MAX_SAFE_HUB_PORT || adapterBasePort + PORT_BLOCK > MAX_SAFE_HUB_PORT) {
+    throw new Error(
+      `updiscord: next instance's port range (hub ${hubPort}, adapters from ${adapterBasePort}) ` +
+        `would reach reserved ports (>= 5000, used by other up-ecosystem Discord factories). ` +
+        `Raise MAX_SAFE_HUB_PORT only after confirming those factories' ranges haven't moved.`,
+    );
+  }
+  return { hubPort, adapterBasePort };
 }
 
 export function buildSkeletonConfig(id: string, existing: InstanceConfig[]): InstanceConfig {
