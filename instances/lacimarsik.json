@@ -21,7 +21,13 @@
         "DATABASE_URL": "file:/Users/laci/workspace/upwithagents/walletup/packages/db/prisma/walletup.db"
       },
       "claudeAgent": "jake",
-      "model": "claude-sonnet-5"
+      "model": "claude-sonnet-5",
+      "extraMcpServers": {
+        "wallet": {
+          "type": "http",
+          "url": "https://mcp.wallet.budgetbakers.com"
+        }
+      }
     }
   ]
 }
