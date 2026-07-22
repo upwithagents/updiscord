@@ -105,7 +105,9 @@ export async function startHub(config: HubConfig): Promise<Hub> {
   validateConfig(config);
 
   const store = config.store ?? new SqliteHubStore(config.storePath ?? "./updiscord.db");
-  const webhookPrefix = config.webhookPrefix ?? "updiscord";
+  // Discord rejects any webhook/username containing "discord" (case-insensitive)
+  // — "updiscord" as a default would break webhook creation for every new agent.
+  const webhookPrefix = config.webhookPrefix ?? "hub";
   const basePort = config.adapterBasePort ?? DEFAULT_ADAPTER_BASE_PORT;
 
   const agents: AgentRecord[] = [];
