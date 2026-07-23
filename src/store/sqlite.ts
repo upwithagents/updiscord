@@ -43,6 +43,9 @@ const MIGRATIONS: string[] = [
 
   CREATE INDEX idx_messages_channel_id ON messages(channel_id, id);
   `,
+  `
+  ALTER TABLE agents ADD COLUMN listens_guild_wide INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 interface AgentRow {
@@ -55,6 +58,7 @@ interface AgentRow {
   tmux_session: string | null;
   adapter_port: number | null;
   status: string;
+  listens_guild_wide: number;
 }
 
 interface MessageRow {
@@ -79,6 +83,7 @@ function rowToAgent(row: AgentRow): AgentRecord {
     tmuxSession: row.tmux_session,
     adapterPort: row.adapter_port,
     status: row.status as AgentStatus,
+    listensGuildWide: row.listens_guild_wide === 1,
   };
 }
 
@@ -118,7 +123,13 @@ const AGENT_COLUMNS: Record<string, string> = {
   tmuxSession: "tmux_session",
   adapterPort: "adapter_port",
   status: "status",
+  listensGuildWide: "listens_guild_wide",
 };
+
+/** better-sqlite3 can't bind native booleans; agents' only boolean column needs 0/1. */
+function bindableAgentValue(key: string, value: unknown): unknown {
+  return key === "listensGuildWide" ? (value ? 1 : 0) : value;
+}
 
 export class SqliteHubStore implements HubStore {
   private db: Database.Database;
@@ -134,25 +145,28 @@ export class SqliteHubStore implements HubStore {
     kind: string;
     channelId: string;
     adapterPort: number;
+    listensGuildWide?: boolean;
   }): Promise<AgentRecord> {
+    const listensGuildWide = input.listensGuildWide ?? false;
     const existing = this.db
       .prepare("SELECT * FROM agents WHERE name = ?")
       .get(input.name) as AgentRow | undefined;
     if (existing) {
       this.db
         .prepare(
-          `UPDATE agents SET kind = ?, channel_id = ?, adapter_port = ?,
+          `UPDATE agents SET kind = ?, channel_id = ?, adapter_port = ?, listens_guild_wide = ?,
            updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`,
         )
-        .run(input.kind, input.channelId, input.adapterPort, existing.id);
+        .run(input.kind, input.channelId, input.adapterPort, listensGuildWide ? 1 : 0, existing.id);
       return (await this.getAgent(existing.id))!;
     }
     const id = randomUUID();
     this.db
       .prepare(
-        "INSERT INTO agents (id, name, kind, channel_id, adapter_port) VALUES (?, ?, ?, ?, ?)",
+        `INSERT INTO agents (id, name, kind, channel_id, adapter_port, listens_guild_wide)
+         VALUES (?, ?, ?, ?, ?, ?)`,
       )
-      .run(id, input.name, input.kind, input.channelId, input.adapterPort);
+      .run(id, input.name, input.kind, input.channelId, input.adapterPort, listensGuildWide ? 1 : 0);
     return (await this.getAgent(id))!;
   }
 
@@ -184,7 +198,7 @@ export class SqliteHubStore implements HubStore {
     for (const [key, column] of Object.entries(AGENT_COLUMNS)) {
       if (key in patch) {
         sets.push(`${column} = ?`);
-        values.push((patch as Record<string, unknown>)[key]);
+        values.push(bindableAgentValue(key, (patch as Record<string, unknown>)[key]));
       }
     }
     if (sets.length === 0) return;

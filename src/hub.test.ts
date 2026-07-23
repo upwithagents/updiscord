@@ -1,7 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { SqliteHubStore } from "./store/sqlite";
 import type { HubConfig } from "./types";
-import { undeliveredBacklog, validateConfig } from "./hub";
+import { undeliveredBacklog, validateConfig, runOnReadyHook } from "./hub";
+
+vi.mock("node:child_process", () => ({ exec: vi.fn((_cmd: string, cb: (...a: unknown[]) => void) => cb(null, "", "")) }));
 
 const valid: HubConfig = {
   token: "t",
@@ -55,5 +57,21 @@ describe("undeliveredBacklog", () => {
     await store.logMessage({ channelId: "c1", direction: "inbound", authorName: "laci", content: "first ever" });
     expect(await undeliveredBacklog(store, agent)).toContain("first ever");
     await store.close();
+  });
+});
+
+describe("runOnReadyHook", () => {
+  test("does nothing when no hook is configured", async () => {
+    const { exec } = await import("node:child_process");
+    vi.mocked(exec).mockClear();
+    runOnReadyHook(undefined);
+    expect(exec).not.toHaveBeenCalled();
+  });
+
+  test("execs the configured hook command", async () => {
+    const { exec } = await import("node:child_process");
+    vi.mocked(exec).mockClear();
+    runOnReadyHook("echo hi");
+    expect(exec).toHaveBeenCalledWith("echo hi", expect.any(Function));
   });
 });

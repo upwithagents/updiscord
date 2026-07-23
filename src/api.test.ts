@@ -13,6 +13,7 @@ const agent: AgentRecord = {
   tmuxSession: null,
   adapterPort: 4500,
   status: "offline",
+  listensGuildWide: false,
 };
 
 const history: MessageRecord[] = [
@@ -41,11 +42,13 @@ describe("startApi", () => {
   let store: HubStore;
   const send = vi.fn(async () => {});
   const onReady = vi.fn(async () => {});
+  const createChannel = vi.fn(async () => "new-channel-id");
+  const spawnPersona = vi.fn(async () => ({ agentId: "a2" }));
 
   beforeEach(async () => {
     vi.clearAllMocks();
     store = stubStore();
-    server = startApi({ port: 0, store, send, onReady });
+    server = startApi({ port: 0, store, send, onReady, createChannel, spawnPersona });
     await new Promise<void>((r) => server.once("listening", () => r()));
     const addr = server.address();
     if (typeof addr !== "object" || !addr) throw new Error("no address");
@@ -97,5 +100,52 @@ describe("startApi", () => {
   test("unmatched routes return 404", async () => {
     const res = await fetch(`${base}/whatever`);
     expect(res.status).toBe(404);
+  });
+
+  test("POST /mgmt/create-channel calls createChannel and returns the channel_id", async () => {
+    const res = await fetch(`${base}/mgmt/create-channel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "walletup" }),
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ channel_id: "new-channel-id" });
+    expect(createChannel).toHaveBeenCalledWith("walletup");
+  });
+
+  test("POST /mgmt/create-channel requires a name", async () => {
+    const res = await fetch(`${base}/mgmt/create-channel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("POST /mgmt/spawn-persona calls spawnPersona and returns the agent id", async () => {
+    const input = {
+      name: "Sandra",
+      kind: "financial-advisor",
+      channelId: "c2",
+      cwd: "/tmp/walletup",
+      adapterCommand: { command: "npx", args: ["tsx", "adapter.ts"] },
+    };
+    const res = await fetch(`${base}/mgmt/spawn-persona`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ agentId: "a2" });
+    expect(spawnPersona).toHaveBeenCalledWith(input);
+  });
+
+  test("POST /mgmt/spawn-persona requires name, kind, channelId, cwd and adapterCommand", async () => {
+    const res = await fetch(`${base}/mgmt/spawn-persona`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Sandra" }),
+    });
+    expect(res.status).toBe(400);
   });
 });

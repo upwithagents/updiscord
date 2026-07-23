@@ -1,0 +1,34 @@
+{
+  "id": "lacimarsik",
+  "discordTokenEnv": "LACIMARSIK_DISCORD_TOKEN",
+  "guildId": "1529115382630191195",
+  "hubPort": 4600,
+  "adapterBasePort": 4700,
+  "personas": [
+    {
+      "name": "Jake",
+      "kind": "concierge",
+      "channelId": "1529115382630191198",
+      "cwd": "/Users/laci/workspace/upwithagents/walletup",
+      "adapterCommand": {
+        "command": "npx",
+        "args": [
+          "tsx",
+          "/Users/laci/workspace/upwithagents/walletup/packages/adapter/src/index.ts"
+        ]
+      },
+      "adapterEnv": {
+        "DATABASE_URL": "file:/Users/laci/workspace/upwithagents/walletup/packages/db/prisma/walletup.db"
+      },
+      "claudeAgent": "jake",
+      "model": "claude-sonnet-5",
+      "listensGuildWide": true,
+      "extraMcpServers": {
+        "wallet": {
+          "type": "http",
+          "url": "https://mcp.wallet.budgetbakers.com"
+        }
+      }
+    }
+  ]
+}

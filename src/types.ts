@@ -13,6 +13,8 @@ export interface AgentRecord {
   tmuxSession: string | null;
   adapterPort: number | null;
   status: AgentStatus;
+  /** Receives inbound messages from every channel in the guild, not just channelId. */
+  listensGuildWide: boolean;
 }
 
 export type MessageDirection = "inbound" | "outbound";
@@ -43,12 +45,13 @@ export interface NewMessage {
  * log in their own DB (e.g. walletup's Prisma) implement this instead.
  */
 export interface HubStore {
-  /** Create the agent if missing; sync kind/channelId/adapterPort to the given values. */
+  /** Create the agent if missing; sync kind/channelId/adapterPort/listensGuildWide to the given values. */
   ensureAgent(input: {
     name: string;
     kind: string;
     channelId: string;
     adapterPort: number;
+    listensGuildWide?: boolean;
   }): Promise<AgentRecord>;
   getAgent(id: string): Promise<AgentRecord | null>;
   getAgentByName(name: string): Promise<AgentRecord | null>;
@@ -77,6 +80,24 @@ export interface AgentConfig {
   channelId: string;
   /** Sent to the agent (via its adapter) when it signals ready. Backlog is appended. */
   onboardingMessage?: string;
+  /** Shell command exec'd (fire-and-forget) once, right after onboarding delivery. */
+  onReadyHook?: string;
+  /** Receives inbound messages from every channel in the guild, not just channelId. Default false. */
+  listensGuildWide?: boolean;
+}
+
+/** A request from an existing persona to register and launch a new one. */
+export interface SpawnPersonaInput {
+  name: string;
+  kind: string;
+  channelId: string;
+  cwd: string;
+  adapterCommand: { command: string; args: string[] };
+  adapterEnv?: Record<string, string>;
+  claudeAgent?: string;
+  model?: string;
+  onboardingMessage?: string;
+  listensGuildWide?: boolean;
 }
 
 export interface HubConfig {
@@ -93,6 +114,13 @@ export interface HubConfig {
   storePath?: string;
   /** Webhook name prefix, default "updiscord" (webhooks named `<prefix>-<agent>`). */
   webhookPrefix?: string;
+  /**
+   * Called after a persona is registered via the spawn_persona tool, before
+   * the HTTP response goes out. The host (bin/hub-runner.ts) uses this to
+   * persist the new persona into instances/<id>.json and launch its tmux
+   * session — startHub itself never touches the filesystem or tmux.
+   */
+  onPersonaSpawned?: (agent: AgentRecord, input: SpawnPersonaInput) => Promise<void>;
 }
 
 export interface Hub {

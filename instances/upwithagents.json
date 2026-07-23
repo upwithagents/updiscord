@@ -1,0 +1,25 @@
+{
+  "id": "upwithagents",
+  "discordTokenEnv": "UPWITHAGENTS_DISCORD_TOKEN",
+  "hubPort": 4400,
+  "adapterBasePort": 4500,
+  "personas": [
+    {
+      "name": "Ron",
+      "kind": "engineering-manager",
+      "channelId": "1529281397183742034",
+      "cwd": "/Users/laci/workspace/upwithagents",
+      "adapterCommand": {
+        "command": "npx",
+        "args": [
+          "tsx",
+          "/Users/laci/workspace/upwithagents/updiscord/bin/generic-adapter.ts"
+        ]
+      },
+      "claudeAgent": "district-engineering-manager",
+      "model": "claude-sonnet-5",
+      "listensGuildWide": true
+    }
+  ],
+  "guildId": "1525597653818281984"
+}

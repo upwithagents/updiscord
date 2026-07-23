@@ -1,11 +1,13 @@
 import http from "node:http";
-import type { AgentRecord, HubStore } from "./types";
+import type { AgentRecord, HubStore, SpawnPersonaInput } from "./types";
 
 export interface ApiOptions {
   port: number;
   store: HubStore;
   send: (agent: AgentRecord, channelId: string, content: string) => Promise<void>;
   onReady: (agent: AgentRecord) => Promise<void>;
+  createChannel: (name: string) => Promise<string>;
+  spawnPersona: (input: SpawnPersonaInput) => Promise<{ agentId: string }>;
 }
 
 function readBody(req: http.IncomingMessage): Promise<string> {
@@ -17,7 +19,7 @@ function readBody(req: http.IncomingMessage): Promise<string> {
 }
 
 export function startApi(opts: ApiOptions): http.Server {
-  const { store, send, onReady } = opts;
+  const { store, send, onReady, createChannel, spawnPersona } = opts;
   const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
@@ -59,6 +61,30 @@ export function startApi(opts: ApiOptions): http.Server {
         const messages = await store.channelHistory(channelMatch[1], limit);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ messages }));
+        return;
+      }
+
+      if (url.pathname === "/mgmt/create-channel" && req.method === "POST") {
+        const { name } = JSON.parse(await readBody(req)) as { name?: string };
+        if (!name) {
+          res.writeHead(400).end("name is required");
+          return;
+        }
+        const channelId = await createChannel(name);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ channel_id: channelId }));
+        return;
+      }
+
+      if (url.pathname === "/mgmt/spawn-persona" && req.method === "POST") {
+        const input = JSON.parse(await readBody(req)) as Partial<SpawnPersonaInput>;
+        if (!input.name || !input.kind || !input.channelId || !input.cwd || !input.adapterCommand) {
+          res.writeHead(400).end("name, kind, channelId, cwd and adapterCommand are required");
+          return;
+        }
+        const result = await spawnPersona(input as SpawnPersonaInput);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
         return;
       }
 
