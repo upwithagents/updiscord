@@ -12,6 +12,8 @@ export const PersonaConfigSchema = z.object({
   onboardingMessage: z.string().optional(),
   onReadyHook: z.string().optional(),
   extraMcpServers: z.record(z.unknown()).optional(),
+  /** Receives inbound messages from every channel in the guild, not just channelId. */
+  listensGuildWide: z.boolean().optional(),
 });
 
 export const InstanceConfigSchema = z.object({

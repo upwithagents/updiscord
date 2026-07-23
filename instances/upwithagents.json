@@ -17,7 +17,8 @@
         ]
       },
       "claudeAgent": "district-engineering-manager",
-      "model": "claude-sonnet-5"
+      "model": "claude-sonnet-5",
+      "listensGuildWide": true
     }
   ],
   "guildId": "1525597653818281984"

@@ -21,17 +21,33 @@ describe("SqliteHubStore", () => {
     expect(b.adapterPort).toBe(4501);
   });
 
+  test("ensureAgent defaults listensGuildWide to false and syncs it on repeat calls", async () => {
+    const a = await store.ensureAgent({ name: "Jake", kind: "concierge", channelId: "c1", adapterPort: 4700 });
+    expect(a.listensGuildWide).toBe(false);
+
+    const b = await store.ensureAgent({
+      name: "Jake",
+      kind: "concierge",
+      channelId: "c1",
+      adapterPort: 4700,
+      listensGuildWide: true,
+    });
+    expect(b.id).toBe(a.id);
+    expect(b.listensGuildWide).toBe(true);
+  });
+
   test("getAgent / getAgentByName / listAgents / updateAgent", async () => {
     const a = await store.ensureAgent({ name: "Advisor", kind: "advisor", channelId: "c1", adapterPort: 4500 });
     expect((await store.getAgent(a.id))?.name).toBe("Advisor");
     expect((await store.getAgentByName("Advisor"))?.id).toBe(a.id);
     expect((await store.getAgent("nope"))).toBeNull();
 
-    await store.updateAgent(a.id, { status: "ready", webhookId: "wh1", webhookToken: "tok" });
+    await store.updateAgent(a.id, { status: "ready", webhookId: "wh1", webhookToken: "tok", listensGuildWide: true });
     const updated = await store.getAgent(a.id);
     expect(updated?.status).toBe("ready");
     expect(updated?.webhookId).toBe("wh1");
     expect(updated?.webhookToken).toBe("tok");
+    expect(updated?.listensGuildWide).toBe(true);
 
     expect((await store.listAgents()).map((x) => x.name)).toEqual(["Advisor"]);
   });

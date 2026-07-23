@@ -13,6 +13,7 @@ const agent: AgentRecord = {
   tmuxSession: null,
   adapterPort: 4500,
   status: "offline",
+  listensGuildWide: false,
 };
 
 const history: MessageRecord[] = [

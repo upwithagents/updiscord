@@ -136,6 +136,13 @@ export async function runAdapter(opts: AdapterOptions = {}): Promise<void> {
         .describe("Name of a .claude/agents/<name>.md persona definition in cwd"),
       model: z.string().optional(),
       onboarding_message: z.string().optional().describe("Greeting sent once the persona is ready"),
+      listens_guild_wide: z
+        .boolean()
+        .optional()
+        .describe(
+          "If true, this persona receives inbound messages from every channel in the server, " +
+            "not just channel_id. Use for account-manager-style personas, not topic specialists.",
+        ),
     },
     async (args) => {
       const res = await fetch(`${HUB_URL}/mgmt/spawn-persona`, {
@@ -150,6 +157,7 @@ export async function runAdapter(opts: AdapterOptions = {}): Promise<void> {
           claudeAgent: args.claude_agent,
           model: args.model,
           onboardingMessage: args.onboarding_message,
+          listensGuildWide: args.listens_guild_wide,
         }),
       });
       if (!res.ok) {

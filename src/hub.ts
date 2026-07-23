@@ -118,6 +118,7 @@ export async function startHub(config: HubConfig): Promise<Hub> {
         kind: a.kind,
         channelId: a.channelId,
         adapterPort: basePort + i,
+        listensGuildWide: a.listensGuildWide,
       }),
     );
   }
@@ -136,6 +137,7 @@ export async function startHub(config: HubConfig): Promise<Hub> {
       kind: input.kind,
       channelId: input.channelId,
       adapterPort: nextAdapterPort++,
+      listensGuildWide: input.listensGuildWide,
     });
     onboarding.set(input.name, input.onboardingMessage);
     await config.onPersonaSpawned?.(agent, input);
@@ -144,7 +146,7 @@ export async function startHub(config: HubConfig): Promise<Hub> {
 
   const buffer = new DebounceBuffer(async (channelId, messages) => {
     for (const agent of await store.listAgents()) {
-      if (agent.channelId !== channelId) continue;
+      if (agent.channelId !== channelId && !agent.listensGuildWide) continue;
       const ok = await deliverToAgent(agent, messages[0].channelName, messages);
       if (!ok) {
         console.warn(

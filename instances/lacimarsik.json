@@ -22,6 +22,7 @@
       },
       "claudeAgent": "jake",
       "model": "claude-sonnet-5",
+      "listensGuildWide": true,
       "extraMcpServers": {
         "wallet": {
           "type": "http",

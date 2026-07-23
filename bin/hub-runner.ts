@@ -54,6 +54,7 @@ async function main(): Promise<void> {
       channelId: p.channelId,
       onboardingMessage: p.onboardingMessage,
       onReadyHook: p.onReadyHook,
+      listensGuildWide: p.listensGuildWide,
     })),
     httpPort: config.hubPort,
     adapterBasePort: config.adapterBasePort,
@@ -71,6 +72,7 @@ async function main(): Promise<void> {
         claudeAgent: input.claudeAgent,
         model: input.model,
         onboardingMessage: input.onboardingMessage,
+        listensGuildWide: input.listensGuildWide,
       };
       config.personas.push(persona);
       writeFileSync(instanceConfigPath(instanceId), JSON.stringify(config, null, 2));
