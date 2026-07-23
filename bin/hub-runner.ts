@@ -73,6 +73,7 @@ async function main(): Promise<void> {
         model: input.model,
         onboardingMessage: input.onboardingMessage,
         listensGuildWide: input.listensGuildWide,
+        extraMcpServers: input.extraMcpServers,
       };
       config.personas.push(persona);
       writeFileSync(instanceConfigPath(instanceId), JSON.stringify(config, null, 2));
@@ -86,6 +87,7 @@ async function main(): Promise<void> {
         adapterEnv: input.adapterEnv,
         claudeAgent: input.claudeAgent,
         model: input.model,
+        extraMcpServers: input.extraMcpServers,
         mcpConfigDir: instanceMcpConfigDir(instanceId),
         sessionPrefix: instanceId,
       });

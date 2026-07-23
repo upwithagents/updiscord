@@ -143,6 +143,13 @@ export async function runAdapter(opts: AdapterOptions = {}): Promise<void> {
           "If true, this persona receives inbound messages from every channel in the server, " +
             "not just channel_id. Use for account-manager-style personas, not topic specialists.",
         ),
+      extra_mcp_servers: z
+        .record(z.unknown())
+        .optional()
+        .describe(
+          "Additional MCP servers (beyond hub-adapter) the persona's session should connect to, " +
+            'keyed by server name, e.g. { wallet: { type: "http", url: "..." } }.',
+        ),
     },
     async (args) => {
       const res = await fetch(`${HUB_URL}/mgmt/spawn-persona`, {
@@ -158,6 +165,7 @@ export async function runAdapter(opts: AdapterOptions = {}): Promise<void> {
           model: args.model,
           onboardingMessage: args.onboarding_message,
           listensGuildWide: args.listens_guild_wide,
+          extraMcpServers: args.extra_mcp_servers,
         }),
       });
       if (!res.ok) {
