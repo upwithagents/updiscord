@@ -22,7 +22,28 @@
       },
       "claudeAgent": "jake",
       "model": "claude-sonnet-5",
-      "listensGuildWide": true,
+      "extraMcpServers": {
+        "wallet": {
+          "type": "http",
+          "url": "https://mcp.wallet.budgetbakers.com"
+        }
+      },
+      "listensGuildWide": true
+    },
+    {
+      "name": "Sandra",
+      "kind": "financial-advisor",
+      "channelId": "1529464021227405322",
+      "cwd": "/Users/laci/workspace/upwithagents/walletup",
+      "adapterCommand": {
+        "command": "npx",
+        "args": [
+          "tsx",
+          "/Users/laci/workspace/upwithagents/walletup/packages/adapter/src/index.ts"
+        ]
+      },
+      "claudeAgent": "sandra",
+      "onboardingMessage": "Hey, I'm Sandra — your dedicated WalletUp financial advisor. Jake set me up here to dig into your WalletUp data (spending, budgets, categories, accounts) in depth. What would you like to look at first?",
       "extraMcpServers": {
         "wallet": {
           "type": "http",
