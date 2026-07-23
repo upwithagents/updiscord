@@ -98,6 +98,8 @@ export interface SpawnPersonaInput {
   model?: string;
   onboardingMessage?: string;
   listensGuildWide?: boolean;
+  /** Additional MCP servers (beyond hub-adapter) the persona's session should connect to. */
+  extraMcpServers?: Record<string, unknown>;
 }
 
 export interface HubConfig {
