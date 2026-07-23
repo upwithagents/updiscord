@@ -28,6 +28,19 @@ const DEFAULT_HTTP_PORT = 4400;
 const DEFAULT_ADAPTER_BASE_PORT = 4500;
 const BACKLOG_LIMIT = 20;
 
+/**
+ * Personas are scoped to their own channel by default — a specialist
+ * spawned for #walletup has no business replying in #general. Only
+ * listensGuildWide personas (account managers) may reply anywhere.
+ */
+export function assertCanReplyInChannel(agent: AgentRecord, channelId: string): void {
+  if (channelId !== agent.channelId && !agent.listensGuildWide) {
+    throw new Error(
+      `updiscord: ${agent.name} is scoped to its own channel and cannot reply in ${channelId}`,
+    );
+  }
+}
+
 export function validateConfig(config: HubConfig): void {
   if (!config.token) throw new Error("updiscord: config.token is required (Discord bot token)");
   if (!config.guildId) throw new Error("updiscord: config.guildId is required");
@@ -183,8 +196,10 @@ export async function startHub(config: HubConfig): Promise<Hub> {
   const api = startApi({
     port: config.httpPort ?? DEFAULT_HTTP_PORT,
     store,
-    send: (agent, channelId, content) =>
-      sendAsAgent(client, store, webhookPrefix, agent, channelId, content),
+    send: (agent, channelId, content) => {
+      assertCanReplyInChannel(agent, channelId);
+      return sendAsAgent(client, store, webhookPrefix, agent, channelId, content);
+    },
     createChannel: (name) => createGuildChannel(client, config.guildId, name),
     spawnPersona,
     onReady: async (agent) => {
@@ -208,6 +223,7 @@ export async function startHub(config: HubConfig): Promise<Hub> {
     sendAsAgent: async (agentName, channelId, content) => {
       const agent = await store.getAgentByName(agentName);
       if (!agent) throw new Error(`updiscord: unknown agent ${agentName}`);
+      assertCanReplyInChannel(agent, channelId);
       await sendAsAgent(client, store, webhookPrefix, agent, channelId, content);
     },
     stop: async () => {

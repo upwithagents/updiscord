@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { SqliteHubStore } from "./store/sqlite";
-import type { HubConfig } from "./types";
-import { undeliveredBacklog, validateConfig, runOnReadyHook } from "./hub";
+import type { AgentRecord, HubConfig } from "./types";
+import { assertCanReplyInChannel, undeliveredBacklog, validateConfig, runOnReadyHook } from "./hub";
 
 vi.mock("node:child_process", () => ({ exec: vi.fn((_cmd: string, cb: (...a: unknown[]) => void) => cb(null, "", "")) }));
 
@@ -27,6 +27,37 @@ describe("validateConfig", () => {
     ],
   ])("rejects bad config %#", (config, message) => {
     expect(() => validateConfig(config as HubConfig)).toThrow(message);
+  });
+});
+
+function makeAgent(overrides: Partial<AgentRecord> = {}): AgentRecord {
+  return {
+    id: "a1",
+    name: "Sandra",
+    kind: "financial-advisor",
+    channelId: "walletup",
+    webhookId: null,
+    webhookToken: null,
+    tmuxSession: null,
+    adapterPort: 4701,
+    status: "ready",
+    listensGuildWide: false,
+    ...overrides,
+  };
+}
+
+describe("assertCanReplyInChannel", () => {
+  test("allows a channel-scoped agent to reply in its own channel", () => {
+    expect(() => assertCanReplyInChannel(makeAgent(), "walletup")).not.toThrow();
+  });
+
+  test("rejects a channel-scoped agent replying elsewhere", () => {
+    expect(() => assertCanReplyInChannel(makeAgent(), "general")).toThrow(/cannot reply in general/);
+  });
+
+  test("allows a guild-wide agent to reply in any channel", () => {
+    const jake = makeAgent({ name: "Jake", channelId: "general", listensGuildWide: true });
+    expect(() => assertCanReplyInChannel(jake, "walletup")).not.toThrow();
   });
 });
 
